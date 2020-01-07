@@ -1,0 +1,22 @@
+sudo: required
+services:
+    - docker
+
+before_install:
+    - docker build -t peterboot/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+    -  docker run -e CI=true peterboot/react-test npm test
+
+after_success:
+    - docker build -t peterboot/multi-client ./client
+    - docker build -t peterboot/multi-nginx ./nginx
+    - docker build -t peterboot/multi-server ./server
+    - docker build -t peterboot/multi-worker ./worker
+    # Log in to the docker CLI
+    - echo "$DOCKER_PASSWORD | docker login -u $DOCKER_ID" --password-stdin
+    # Take those images & push them to docker hub
+    - docker push peterboot/multi-client
+    - docker push peterboot/multi-nginx
+    - docker push peterboot/multi-server
+    - docker push peterboot/multi-worker
